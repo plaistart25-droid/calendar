@@ -14,11 +14,14 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageTe
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.ByteArrayInputStream;
+
+import static org.apache.logging.log4j.LogManager.getLogger;
 
 @Slf4j
 public abstract class TelegramBot extends TelegramLongPollingBot implements TelegramBotClient {
@@ -152,5 +155,13 @@ public abstract class TelegramBot extends TelegramLongPollingBot implements Tele
         } catch (TelegramApiException e) {
             log.error("Не получилось отправить ChatAction!");
         }
+    }
+
+    public void notifyAlreadyInProcess(Update update) {
+        Long chatId = update.hasCallbackQuery()
+                ? update.getCallbackQuery().getMessage().getChatId()
+                : update.getMessage().getChatId();
+
+        sendReturnedMessage(chatId, "The previous message is being processed, you need to wait for its completion");
     }
 }
