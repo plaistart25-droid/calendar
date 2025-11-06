@@ -162,6 +162,6 @@ public abstract class TelegramBot extends TelegramLongPollingBot implements Tele
                 ? update.getCallbackQuery().getMessage().getChatId()
                 : update.getMessage().getChatId();
 
-        sendReturnedMessage(chatId, "The previous message is being processed, you need to wait for its completion");
+        sendReturnedMessage(chatId, "Предыдущее сообщение обрабатывается, вам необходимо дождаться его завершения.");
     }
 }
