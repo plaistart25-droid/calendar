@@ -32,7 +32,6 @@ public class GoogleAuthHandler implements UpdateHandler {
                     
                     2) Выбери аккаунт и разрешите доступ.
                     
-                    После этого вернись в чат и набери /auth_status
                     Ваша одноразовая, персональная ссылка: 
                     %s
                     """;
