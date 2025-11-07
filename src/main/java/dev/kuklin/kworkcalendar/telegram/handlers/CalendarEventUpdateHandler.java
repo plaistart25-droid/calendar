@@ -176,8 +176,7 @@ public class CalendarEventUpdateHandler implements UpdateHandler {
 
             if (context.getCalendarId() == null) {
                 assistantTelegramBot.sendReturnedMessage(chatId,
-                        "Авторизуйтесь или установите календарь в ручную! "
-                                + Command.ASSISTANT_HELP.getCommandText());
+                        "Вам нужно авторизоваться в гугл календаре. Для этого  отправьте свою почту админу @pl_ai_bot");
                 return false;
             }
         } else {
