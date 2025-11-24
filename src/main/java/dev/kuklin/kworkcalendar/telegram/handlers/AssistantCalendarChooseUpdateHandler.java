@@ -8,6 +8,7 @@ import dev.kuklin.kworkcalendar.library.tgutils.Command;
 import dev.kuklin.kworkcalendar.library.tgutils.TelegramKeyboard;
 import dev.kuklin.kworkcalendar.models.TokenRefreshException;
 import dev.kuklin.kworkcalendar.services.GoogleCacheableCalendarService;
+import dev.kuklin.kworkcalendar.services.UserMessagesLogService;
 import dev.kuklin.kworkcalendar.services.google.CalendarService;
 import dev.kuklin.kworkcalendar.services.google.TokenService;
 import dev.kuklin.kworkcalendar.telegram.AssistantTelegramBot;
@@ -29,6 +30,7 @@ public class AssistantCalendarChooseUpdateHandler implements UpdateHandler {
     private final AssistantTelegramBot telegramBot;
     private final TokenService tokenService;
     private final GoogleCacheableCalendarService cacheableCalendarService;
+    private final UserMessagesLogService userMessagesLogService;
     private static final String DEL = AssistantTelegramBot.DELIMETER;
     public static final String PREV_CMD = Command.ASSISTANT_CHOOSE_CALENDAR.getCommandText() + DEL + "/prev" + DEL;
     //Команда навигации календаря
@@ -45,6 +47,13 @@ public class AssistantCalendarChooseUpdateHandler implements UpdateHandler {
 
     @Override
     public void handle(Update update, TelegramUser telegramUser) {
+        userMessagesLogService.createLog(
+                telegramUser.getTelegramId(),
+                telegramUser.getUsername(),
+                telegramUser.getFirstname(),
+                telegramUser.getLastname(),
+                Command.ASSISTANT_CHOOSE_CALENDAR.getCommandText()
+        );
 
         if (update.hasCallbackQuery()) {
             processCallback(update, telegramUser);

@@ -5,6 +5,7 @@ import dev.kuklin.kworkcalendar.library.tgmodels.TelegramBot;
 import dev.kuklin.kworkcalendar.library.tgmodels.UpdateHandler;
 import dev.kuklin.kworkcalendar.library.tgutils.Command;
 import dev.kuklin.kworkcalendar.services.UserGoogleCalendarService;
+import dev.kuklin.kworkcalendar.services.UserMessagesLogService;
 import dev.kuklin.kworkcalendar.services.google.CalendarService;
 import dev.kuklin.kworkcalendar.telegram.AssistantTelegramBot;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ public class SetCalendarIdUpdateHandler implements UpdateHandler {
     private final AssistantTelegramBot assistantTelegramBot;
     private final UserGoogleCalendarService userGoogleCalendarService;
     private final CalendarService calendarService;
+    private final UserMessagesLogService userMessagesLogService;
     private static final String SUCCESS_MSG = "Календарь установлен";
     private static final String ERROR_MSG = "Неверный формат команды";
     public static final String CALENDAR_IS_NULL_MSG = "Вам необходимо установить свой календарь! Для инструкций введите команду /start";
@@ -26,6 +28,14 @@ public class SetCalendarIdUpdateHandler implements UpdateHandler {
     public void handle(Update update, TelegramUser telegramUser) {
         //Ожидается сообщение формата /set calendarId
         Message message = update.getMessage();
+
+        userMessagesLogService.createLog(
+                telegramUser.getTelegramId(),
+                telegramUser.getUsername(),
+                telegramUser.getFirstname(),
+                telegramUser.getLastname(),
+                message.getText()
+        );
         Long chatId = message.getChatId();
         assistantTelegramBot.sendChatActionTyping(chatId);
 
