@@ -21,7 +21,7 @@ public class AssistantUserLogHandler implements UpdateHandler {
     private static final Set<Long> ADMIN_IDS = Set.of(
             425120436L, //kuklin_daniil
             457794501L, //cherny_shov_dm
-            457794501L,  //plai_admin
+            8129408542L,  //plai_admin
             5978082232L //dm_chernyshovv
     );
     @Override
