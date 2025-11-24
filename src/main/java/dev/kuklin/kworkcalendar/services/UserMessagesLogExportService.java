@@ -62,11 +62,6 @@ public class UserMessagesLogExportService {
                 );
             }
 
-            // Поджать ширину колонок
-            for (int i = 0; i <= 7; i++) {
-                sheet.autoSizeColumn(i);
-            }
-
             workbook.write(out);
             return out.toByteArray();
         } catch (IOException e) {
