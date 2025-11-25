@@ -12,6 +12,7 @@ public class AssistantSchedulerService {
 
     private final EventNotificationSchedulerProcessor eventNotificationSchedulerProcessor;
     private final EventNotificationNoteCleanTableScheduleProcessor eventNotificationNoteCleanTableScheduleProcessor;
+    private final DailyNotificationSchedulerProcessor dailyNotificationSchedulerProcessor;
 
     @Scheduled(cron = "0 */3 * * * *")
     public void eventNotificationSchedulerProcess() {
@@ -23,6 +24,13 @@ public class AssistantSchedulerService {
     public void eventNotificationNoteCleanTableScheduleProcess() {
         getInfo(eventNotificationNoteCleanTableScheduleProcessor.getSchedulerName());
         eventNotificationNoteCleanTableScheduleProcessor.process();
+    }
+
+    // каждые 10 минут проверяем, кому пора слать "доброе утро"
+    @Scheduled(cron = "0 */10 * * * *")
+    public void dailyNotificationSchedulerProcessor() {
+        getInfo(dailyNotificationSchedulerProcessor.getSchedulerName());
+        dailyNotificationSchedulerProcessor.process();
     }
 
     private void getInfo(String name) {
