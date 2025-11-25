@@ -51,4 +51,20 @@ public class NotifiedEventService {
         return deleted;
     }
 
+    public boolean isNotified(String calendarId, String eventId, Long userId, Integer reminderMinutes) {
+        return repo.existsByCalendarIdAndEventIdAndUserIdAndReminderMinutes(
+                calendarId, eventId, userId, reminderMinutes
+        );
+    }
+
+    public NotifiedEvent markAsNotified(String calendarId, String eventId, Long userId, Integer reminderMinutes) {
+        return repo.save(
+                new NotifiedEvent()
+                        .setUserId(userId)
+                        .setCalendarId(calendarId)
+                        .setEventId(eventId)
+                        .setReminderMinutes(reminderMinutes)
+        );
+    }
+
 }

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class EventNotificationNoteCleanTableScheduleProcessor implements ScheduleProcessor {
     private final NotifiedEventService notifiedEventService;
-    private static final Integer HOUR = 2;
+    private static final Integer HOUR = 72;
     @Override
     public void process() {
         notifiedEventService.cleanOlderThanHours(HOUR);

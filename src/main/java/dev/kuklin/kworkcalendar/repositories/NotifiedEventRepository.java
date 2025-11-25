@@ -20,4 +20,11 @@ public interface NotifiedEventRepository extends JpaRepository<NotifiedEvent, Lo
     @Modifying
     @Query("DELETE FROM NotifiedEvent ne WHERE ne.notifiedAt < :cutoff")
     int deleteAllByNotifiedAtBefore(@Param("cutoff") Instant cutoff);
+
+    boolean existsByCalendarIdAndEventIdAndUserIdAndReminderMinutes(
+            String calendarId,
+            String eventId,
+            Long userId,
+            Integer reminderMinutes
+    );
 }
