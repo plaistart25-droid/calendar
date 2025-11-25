@@ -1,11 +1,13 @@
 package dev.kuklin.kworkcalendar.services;
 
 import dev.kuklin.kworkcalendar.entities.UserNotificationSettings;
+import dev.kuklin.kworkcalendar.models.TokenRefreshException;
 import dev.kuklin.kworkcalendar.repositories.UserNotificationSettingsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.*;
 import java.util.List;
 
@@ -56,11 +58,12 @@ public class UserNotificationSettingsService {
     /**
      * Обновить смещение от UTC (UTC+N).
      */
-    public UserNotificationSettings updateUtcOffset(Long telegramId, Integer utcOffsetHours) {
+    public UserNotificationSettings updateUtcOffset(Long telegramId, Integer utcOffsetHours) throws TokenRefreshException, IOException {
         UserNotificationSettings settings = getOrCreate(telegramId);
         settings.setUtcOffsetHours(utcOffsetHours);
         log.info("Update utcOffsetHours for user {} to {}", telegramId, utcOffsetHours);
         return repository.save(settings);
+
     }
 
     /**

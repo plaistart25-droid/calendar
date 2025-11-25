@@ -111,6 +111,13 @@ public class AssistantCalendarChooseUpdateHandler implements UpdateHandler {
         );
     }
 
+    public void sendCalendarErrorMessage(Long telegramId) {
+        telegramBot.sendReturnedMessage(
+                telegramId,
+                "❌ Не удалось подключить календарь автоматически! Подкилючите его в ручную при помощи команды " + Command.ASSISTANT_CHOOSE_CALENDAR.getCommandText()
+        );
+    }
+
     private void processMessage(Update update, TelegramUser telegramUser) {
         Long chatId = update.getMessage().getChatId();
         telegramBot.sendChatActionTyping(chatId);

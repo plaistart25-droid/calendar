@@ -17,7 +17,8 @@ public enum Command {
     ASSISTANT_CHOOSE_CALENDAR("/choosecalendar"),
     ASSISTANT_TABLE("/table"),
     ASSISTANT_TZ("/tz"),
-    ASSISTANT_DAILY_TIME("/notify_time")
+    ASSISTANT_DAILY_TIME("/notify_time"),
+    ASSISTANT_GET_CALENDAR("/getcalendar")
     ;
 
     private final String commandText;
