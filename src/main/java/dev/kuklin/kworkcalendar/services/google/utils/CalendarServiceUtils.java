@@ -9,9 +9,26 @@ import dev.kuklin.kworkcalendar.models.CalendarEventAiResponse;
 import java.time.*;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
 
 public class CalendarServiceUtils {
     private static final String DEFAULT_TZ = "Europe/Moscow";
+    private static final Map<Integer, String> OFFSET_TO_ZONE = Map.ofEntries(
+            Map.entry(0,  "UTC"),
+            Map.entry(1,  "Europe/Berlin"),
+            Map.entry(2,  "Europe/Kaliningrad"),
+            Map.entry(3,  "Europe/Moscow"),
+            Map.entry(4,  "Europe/Samara"),
+            Map.entry(5,  "Asia/Yekaterinburg"),
+            Map.entry(6,  "Asia/Novosibirsk"),
+            Map.entry(7,  "Asia/Krasnoyarsk"),
+            Map.entry(8,  "Asia/Irkutsk"),
+            Map.entry(9,  "Asia/Yakutsk"),
+            Map.entry(10, "Asia/Vladivostok"),
+            Map.entry(11, "Asia/Magadan"),
+            Map.entry(12, "Asia/Kamchatka")
+            // при желании добавишь ещё
+    );
 
     public static String getRequestByEventsList(List<Event> events) {
         StringBuilder sb = new StringBuilder();

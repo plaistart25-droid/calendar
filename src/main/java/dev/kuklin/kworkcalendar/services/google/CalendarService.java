@@ -191,20 +191,25 @@ public class CalendarService {
         }
     }
     public String setNewTimeZoneOrNull(Long telegramId, Integer offset) throws IOException, TokenRefreshException {
+        log.info("Setting new time zone!");
         CalendarContext context = getCalendarContext(telegramId);
         if (context.getCalendarId() == null) {
+            log.info("calndar id == null");
             // либо просто выходим, либо создаём свой PLAI BOT:
             // String id = getOrCreateCalendarId(auth);
             return null;
         }
         String tz = resolveTimeZoneFromUtcOffsetHours(offset);
+        log.info("Timezone: {}", tz);
         com.google.api.services.calendar.model.Calendar existing =
                 context.getCalendar()
                         .calendars()
                         .get(context.getCalendarId())
                         .execute();
 
+        log.info("calendar info: summary:{}, tz:{}", existing.getSummary(), existing.getTimeZone());
         if (existing.getTimeZone() == null || !existing.getTimeZone().equals(tz)) {
+            log.info("Calendar set new timezone!");
             existing.setTimeZone(tz);
 
             context.getCalendar()

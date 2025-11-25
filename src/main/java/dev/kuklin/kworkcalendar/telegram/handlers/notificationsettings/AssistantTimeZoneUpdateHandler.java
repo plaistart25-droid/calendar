@@ -96,7 +96,8 @@ public class AssistantTimeZoneUpdateHandler implements UpdateHandler {
             var newTime = calendarService
                     .setNewTimeZoneOrNull(
                             telegramUser.getTelegramId(),
-                            settings.getUtcOffsetHours());
+                            offset);
+
             if (newTime == null) {
                 assistantTelegramBot.sendReturnedMessage(
                         chatId, CALENDAR_ERROR_MSG);
