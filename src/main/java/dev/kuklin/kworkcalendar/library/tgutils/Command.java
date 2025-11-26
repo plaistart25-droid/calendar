@@ -18,8 +18,9 @@ public enum Command {
     ASSISTANT_TABLE("/table"),
     ASSISTANT_TZ("/tz"),
     ASSISTANT_DAILY_TIME("/notify_time"),
-    ASSISTANT_GET_CALENDAR("/getcalendar")
-    ;
+    ASSISTANT_GET_CALENDAR("/getcalendar"),
+    ASSISTANT_SETTINGS("/settings"),
+    ASSISTANT_CLOSE("/close");
 
     private final String commandText;
 

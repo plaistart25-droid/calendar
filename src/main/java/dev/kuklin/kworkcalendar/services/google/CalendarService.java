@@ -166,8 +166,9 @@ public class CalendarService {
         StringBuilder sb = new StringBuilder();
 
         sb
+                .append("Календарь:").append("\n")
                 .append(existing.getSummary()).append("\n")
-                .append("TIMEZONE: ").append(existing.getTimeZone());
+                .append("Таймзона: ").append(existing.getTimeZone());
 
         return sb.toString();
     }

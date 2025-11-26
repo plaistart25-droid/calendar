@@ -12,10 +12,13 @@ import dev.kuklin.kworkcalendar.services.UserMessagesLogService;
 import dev.kuklin.kworkcalendar.services.google.CalendarService;
 import dev.kuklin.kworkcalendar.services.google.TokenService;
 import dev.kuklin.kworkcalendar.telegram.AssistantTelegramBot;
+import dev.kuklin.kworkcalendar.telegram.handlers.notificationsettings.AssistantDailyTimeUpdateHandler;
+import dev.kuklin.kworkcalendar.telegram.handlers.notificationsettings.AssistantTimeZoneUpdateHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -31,6 +34,8 @@ public class AssistantCalendarChooseUpdateHandler implements UpdateHandler {
     private final TokenService tokenService;
     private final GoogleCacheableCalendarService cacheableCalendarService;
     private final UserMessagesLogService userMessagesLogService;
+    private final AssistantTimeZoneUpdateHandler assistantTimeZoneUpdateHandler;
+    private final AssistantDailyTimeUpdateHandler assistantDailyTimeUpdateHandler;
     private static final String DEL = AssistantTelegramBot.DELIMETER;
     public static final String PREV_CMD = Command.ASSISTANT_CHOOSE_CALENDAR.getCommandText() + DEL + "/prev" + DEL;
     //Команда навигации календаря
@@ -44,6 +49,17 @@ public class AssistantCalendarChooseUpdateHandler implements UpdateHandler {
             "Вам нужно пройти авторизацию заново!";
     private static final String GOOGLE_AUTH_CALLBACK_ERROR_MESSAGE =
             "Возникла ошибка! Проверьте свою авторизацию или напишите ";
+    private static final String SUCCESS_MSG = """
+            ✅ Календарь успешно подключен!
+            Теперь вы можете отправить мне текстовое или голосовое сообщение, например:
+            -   послезавтра записаться на стрижку
+            -   19 ноября позвонить Сергею в 12:00 (напомнить ему о проекте)
+                
+            🔹А еще ты можешь:
+            -  удалить задачу
+            -  переслать задачу и написать “перенеси время на 14:00”
+            -  написать /today и посмотреть все свои задачи на сегодня                 
+                    """;
 
     @Override
     public void handle(Update update, TelegramUser telegramUser) {
@@ -69,35 +85,13 @@ public class AssistantCalendarChooseUpdateHandler implements UpdateHandler {
                 List<GoogleCacheableCalendar> calendarList = calendarService
                         .listUserCalendarsOrNull(auth.getTelegramId());
 
-                String response =
-                        """
-                                ✅ Календарь успешно подключен!
-                                Теперь вы можете отправить мне текстовое или голосовое сообщение, например:
-                                -   послезавтра записаться на стрижку
-                                -   19 ноября позвонить Сергею в 12:00 (напомнить ему о проекте)
-                                    
-                                🔹А еще ты можешь:
-                                -  удалить задачу
-                                -  переслать задачу и написать “перенеси время на 14:00”
-                                -  написать /today и посмотреть все свои задачи на сегодня                 
-                                        """;
-                telegramBot.sendReturnedMessage(auth.getTelegramId(), response, getCalendarListKeyboard(calendarList), null);
+                telegramBot.sendReturnedMessage(auth.getTelegramId(), SUCCESS_MSG, getCalendarListKeyboard(calendarList), null);
             } else {
-                String response =
-                        """
-                                ✅ Календарь успешно подключен!
-                                Теперь вы можете отправить мне текстовое или голосовое сообщение, например:
-                                -   послезавтра записаться на стрижку
-                                -   19 ноября позвонить Сергею в 12:00 (напомнить ему о проекте)
-                                    
-                                🔹А еще ты можешь:
-                                -  удалить задачу
-                                -  переслать задачу и написать “перенеси время на 14:00”
-                                -  написать /today и посмотреть все свои задачи на сегодня                 
-                                        """;
-                telegramBot.sendReturnedMessage(auth.getTelegramId(), response);
+                telegramBot.sendReturnedMessage(auth.getTelegramId(), SUCCESS_MSG);
             }
 
+            assistantTimeZoneUpdateHandler.sendDefTzMessage(auth.getTelegramId());
+            assistantDailyTimeUpdateHandler.sendDefMessage(auth.getTelegramId());
         } catch (Exception ignore) {
             telegramBot.sendReturnedMessage(auth.getTelegramId(),
                     GOOGLE_AUTH_CALLBACK_ERROR_MESSAGE + Command.ASSISTANT_CHOOSE_CALENDAR.getCommandText());
