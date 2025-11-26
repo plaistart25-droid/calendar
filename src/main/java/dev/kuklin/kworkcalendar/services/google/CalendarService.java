@@ -559,11 +559,14 @@ public class CalendarService {
 
     //Используется без авторизации пользователя.
     //Используется для верификации календаря
-    public boolean existConnectionCalendarWithNoAuth(String calendarId) throws IOException {
-        com.google.api.services.calendar.model.Calendar calendar =
-                calendarService.calendars().get(calendarId).execute();
-
-        return calendar != null;
+    public boolean existConnectionCalendarWithNoAuth(String calendarId) {
+        try {
+            com.google.api.services.calendar.model.Calendar calendar =
+                    calendarService.calendars().get(calendarId).execute();
+            return calendar != null;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     @Data

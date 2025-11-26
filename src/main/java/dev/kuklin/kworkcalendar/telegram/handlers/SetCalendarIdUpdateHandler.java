@@ -9,12 +9,14 @@ import dev.kuklin.kworkcalendar.services.UserMessagesLogService;
 import dev.kuklin.kworkcalendar.services.google.CalendarService;
 import dev.kuklin.kworkcalendar.telegram.AssistantTelegramBot;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class SetCalendarIdUpdateHandler implements UpdateHandler {
     private final AssistantTelegramBot assistantTelegramBot;
     private final UserGoogleCalendarService userGoogleCalendarService;
@@ -44,16 +46,22 @@ public class SetCalendarIdUpdateHandler implements UpdateHandler {
             assistantTelegramBot.sendReturnedMessage(chatId, ERROR_MSG);
             return;
         }
-        if (!checkCalendarConnection(telegramUser.getTelegramId(), calendarId)) {
-            assistantTelegramBot.sendReturnedMessage(chatId, "Календарь или не существует, или к нему не установлен доступ!");
-            return;
-        }
 
-        userGoogleCalendarService.setCalendarIdByTelegramId(telegramUser.getTelegramId(), calendarId);
-        assistantTelegramBot.sendReturnedMessage(chatId, SUCCESS_MSG);
+        try {
+            if (checkCalendarConnection(calendarId)) {
+                userGoogleCalendarService.setCalendarIdByTelegramId(telegramUser.getTelegramId(), calendarId);
+                assistantTelegramBot.sendReturnedMessage(chatId, SUCCESS_MSG);
+
+            } else {
+                assistantTelegramBot.sendReturnedMessage(chatId, "Календарь или не существует, или к нему не установлен доступ!");
+            }
+        } catch (Exception e) {
+            assistantTelegramBot.sendReturnedMessage(chatId, "Календарь или не существует, или к нему не установлен доступ!");
+            log.error("Set calendarId error!", e);
+        }
     }
 
-    private boolean checkCalendarConnection(Long telegramId, String calendarId) {
+    private boolean checkCalendarConnection(String calendarId) {
         if (calendarId == null) return false;
         return calendarService.existConnectionCalendarWithNoAuth(calendarId);
     }
