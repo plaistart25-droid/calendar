@@ -42,6 +42,7 @@ public class UserNotificationSettingsService {
         UserNotificationSettings settings = getOrCreate(telegramId);
         settings.setDailyTime(dailyTime);
         settings.setDailyEnabled(true);
+        settings.setLastDailyNotified(null);
         log.info("Update dailyTime for user {} to {}", telegramId, dailyTime);
         return repository.save(settings);
     }
