@@ -108,7 +108,6 @@ public class AssistantGetCalendarUpdateHandler implements UpdateHandler {
         return InlineKeyboardMarkup.builder()
                 .keyboard(List.of(row))
                 .build();
-
     }
 
     @Override
