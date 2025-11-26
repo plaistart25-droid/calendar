@@ -230,7 +230,7 @@ public class CalendarEventUpdateHandler implements UpdateHandler {
         }
 
         sb
-                .append("[").append(summary).append("]").append("\n")
+                .append(summary).append("\n")
                 .append("• Дата: ").append(formatHumanReadableDayAndMonth(event.getStart())).append("\n")
                 .append("• Время: ").append(formatHumanReadableTimeBetweenStartAndEnd(event.getStart(), event.getEnd())).append("\n")
                 .append("• Заметки: ").append(description).append("\n");
