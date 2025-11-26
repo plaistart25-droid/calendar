@@ -32,6 +32,9 @@ public class AssistantGetCalendarUpdateHandler implements UpdateHandler {
     private static final String GOOGLE_ERROR_MSG = """
                 Ошибка соединения с Google! Попробуйте повторить действие позже!
             """;
+    private static final String NULL_CALENDAR_MSG = """
+            Вам нужно авторизоваться или поставить календарь вручную! Введите команду /start!
+            """;
 
     @Override
     public void handle(Update update, TelegramUser telegramUser) {
@@ -55,7 +58,12 @@ public class AssistantGetCalendarUpdateHandler implements UpdateHandler {
         assistantTelegramBot.sendChatActionTyping(chatId);
 
         userMessagesLogService.createLog(telegramUser, update.getMessage().getText());
-        Calendar calendar = calendarService.getCalendarByTelegramId(telegramUser.getTelegramId());
+        Calendar calendar = calendarService.getCalendarByTelegramIdOrNull(telegramUser.getTelegramId());
+        if (calendar == null) {
+            assistantTelegramBot.sendReturnedMessage(
+                    chatId, NULL_CALENDAR_MSG);
+            return;
+        }
         assistantTelegramBot.sendReturnedMessage(
                 chatId, getCalendarString(calendar),
                 buildKeyboard(calendar.getId()), null);
@@ -68,7 +76,7 @@ public class AssistantGetCalendarUpdateHandler implements UpdateHandler {
         Integer messageId = callbackQuery.getMessage().getMessageId();
 
         userMessagesLogService.createLog(telegramUser, callbackQuery.getData());
-        Calendar calendar = calendarService.getCalendarByTelegramId(telegramUser.getTelegramId());
+        Calendar calendar = calendarService.getCalendarByTelegramIdOrNull(telegramUser.getTelegramId());
         assistantTelegramBot.sendEditMessage(
                 chatId, getCalendarString(calendar),
                 messageId, buildKeyboard(calendar.getId()));

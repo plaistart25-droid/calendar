@@ -173,8 +173,9 @@ public class CalendarService {
         return sb.toString();
     }
 
-    public com.google.api.services.calendar.model.Calendar getCalendarByTelegramId(Long telegramId) throws TokenRefreshException, IOException {
+    public com.google.api.services.calendar.model.Calendar getCalendarByTelegramIdOrNull(Long telegramId) throws TokenRefreshException, IOException {
         CalendarContext context = getCalendarContext(telegramId);
+        if (context.getCalendarId() == null) return null;
         com.google.api.services.calendar.model.Calendar existing =
                 context.getCalendar()
                         .calendars()
@@ -558,15 +559,11 @@ public class CalendarService {
 
     //Используется без авторизации пользователя.
     //Используется для верификации календаря
-    public boolean existConnectionCalendarWithNoAuth(String calendarId) {
-        try {
-            com.google.api.services.calendar.model.Calendar calendar =
-                    calendarService.calendars().get(calendarId).execute();
+    public boolean existConnectionCalendarWithNoAuth(String calendarId) throws IOException {
+        com.google.api.services.calendar.model.Calendar calendar =
+                calendarService.calendars().get(calendarId).execute();
 
-            return calendar != null;
-        } catch (IOException e) {
-            return false;
-        }
+        return calendar != null;
     }
 
     @Data
