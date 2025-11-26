@@ -16,15 +16,16 @@ import java.util.List;
 @Slf4j
 public class UserNotificationSettingsService {
     private final UserNotificationSettingsRepository repository;
+    private static final LocalTime DEF_TIME = LocalTime.of(6, 0);
 
     public UserNotificationSettings getOrCreate(Long telegramId) {
         return repository.findByTelegramId(telegramId)
                 .orElseGet(() -> {
                     UserNotificationSettings settings = new UserNotificationSettings()
                             .setTelegramId(telegramId)
-                            .setDailyEnabled(false)
+                            .setDailyEnabled(true)
                             .setUtcOffsetHours(null)
-                            .setDailyTime(null)
+                            .setDailyTime(DEF_TIME)
                             .setLastDailyNotified(null);
                     return repository.save(settings);
                 });

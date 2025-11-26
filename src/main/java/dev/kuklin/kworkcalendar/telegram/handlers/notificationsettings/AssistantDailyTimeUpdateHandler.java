@@ -6,6 +6,7 @@ import dev.kuklin.kworkcalendar.library.tgmodels.TelegramBot;
 import dev.kuklin.kworkcalendar.library.tgmodels.UpdateHandler;
 import dev.kuklin.kworkcalendar.library.tgutils.Command;
 import dev.kuklin.kworkcalendar.library.tgutils.TelegramKeyboard;
+import dev.kuklin.kworkcalendar.services.UserMessagesLogService;
 import dev.kuklin.kworkcalendar.services.UserNotificationSettingsService;
 import dev.kuklin.kworkcalendar.telegram.AssistantTelegramBot;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class AssistantDailyTimeUpdateHandler implements UpdateHandler {
 
     private final AssistantTelegramBot assistantTelegramBot;
     private final UserNotificationSettingsService userNotificationSettingsService;
+    private final UserMessagesLogService userMessagesLogService;
 
     private static final String CMD = Command.ASSISTANT_DAILY_TIME.getCommandText();
 
@@ -49,6 +51,7 @@ public class AssistantDailyTimeUpdateHandler implements UpdateHandler {
         Long chatId = update.getMessage().getChatId();
         assistantTelegramBot.sendChatActionTyping(chatId);
 
+        userMessagesLogService.createLog(telegramUser, update.getMessage().getText());
         UserNotificationSettings settings = userNotificationSettingsService
                 .getOrCreate(telegramUser.getTelegramId());
 
@@ -82,6 +85,7 @@ public class AssistantDailyTimeUpdateHandler implements UpdateHandler {
         Integer messageId = callbackQuery.getMessage().getMessageId();
         String callbackData = callbackQuery.getData();
 
+        userMessagesLogService.createLog(telegramUser, callbackData);
         UserNotificationSettings settings = userNotificationSettingsService
                 .getOrCreate(telegramUser.getTelegramId());
 

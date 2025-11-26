@@ -38,7 +38,7 @@ public class EventNotificationSchedulerProcessor implements ScheduleProcessor {
     private final AssistantTelegramBot telegramBot;
     private final NotifiedEventService notifiedEventService;
 
-    private static final Integer NOTIFICATED_TIME_MINUTES = 30;
+    private static final Integer NOTIFICATED_TIME_MINUTES = 60;
 
     @Override
     public void process() {

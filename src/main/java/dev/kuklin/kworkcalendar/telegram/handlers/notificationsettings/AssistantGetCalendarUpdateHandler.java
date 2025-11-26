@@ -2,12 +2,10 @@ package dev.kuklin.kworkcalendar.telegram.handlers.notificationsettings;
 
 import com.google.api.services.calendar.model.Calendar;
 import dev.kuklin.kworkcalendar.entities.TelegramUser;
-import dev.kuklin.kworkcalendar.entities.UserNotificationSettings;
-import dev.kuklin.kworkcalendar.library.tgmodels.TelegramBot;
 import dev.kuklin.kworkcalendar.library.tgmodels.UpdateHandler;
 import dev.kuklin.kworkcalendar.library.tgutils.Command;
-import dev.kuklin.kworkcalendar.library.tgutils.TelegramKeyboard;
 import dev.kuklin.kworkcalendar.models.TokenRefreshException;
+import dev.kuklin.kworkcalendar.services.UserMessagesLogService;
 import dev.kuklin.kworkcalendar.services.google.CalendarService;
 import dev.kuklin.kworkcalendar.telegram.AssistantTelegramBot;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +18,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -28,6 +25,7 @@ import java.util.List;
 public class AssistantGetCalendarUpdateHandler implements UpdateHandler {
     private final AssistantTelegramBot assistantTelegramBot;
     private final CalendarService calendarService;
+    private final UserMessagesLogService userMessagesLogService;
     private static final String TOKEN_ERROR_MSG = """
                 Проверьте статус вашей авторизации!
             """;
@@ -40,6 +38,7 @@ public class AssistantGetCalendarUpdateHandler implements UpdateHandler {
         Long chatId = update.getMessage() != null
                 ? update.getMessage().getChatId()
                 : update.getCallbackQuery().getMessage().getChatId();
+        assistantTelegramBot.sendChatActionTyping(chatId);
         try {
             if (update.hasMessage()) processMessage(update, telegramUser);
             else if (update.hasCallbackQuery()) processCallback(update, telegramUser);
@@ -55,6 +54,7 @@ public class AssistantGetCalendarUpdateHandler implements UpdateHandler {
         Long chatId = update.getMessage().getChatId();
         assistantTelegramBot.sendChatActionTyping(chatId);
 
+        userMessagesLogService.createLog(telegramUser, update.getMessage().getText());
         Calendar calendar = calendarService.getCalendarByTelegramId(telegramUser.getTelegramId());
         assistantTelegramBot.sendReturnedMessage(
                 chatId, getCalendarString(calendar),
@@ -67,6 +67,7 @@ public class AssistantGetCalendarUpdateHandler implements UpdateHandler {
         Long chatId = callbackQuery.getMessage().getChatId();
         Integer messageId = callbackQuery.getMessage().getMessageId();
 
+        userMessagesLogService.createLog(telegramUser, callbackQuery.getData());
         Calendar calendar = calendarService.getCalendarByTelegramId(telegramUser.getTelegramId());
         assistantTelegramBot.sendEditMessage(
                 chatId, getCalendarString(calendar),

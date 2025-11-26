@@ -29,7 +29,7 @@ import java.util.List;
 public class AssistantTimeZoneUpdateHandler implements UpdateHandler {
 
     private final AssistantTelegramBot assistantTelegramBot;
-    private final UserMessagesLogService userMessagesLogService; //TODO
+    private final UserMessagesLogService userMessagesLogService;
     private final CalendarService calendarService;
     private final UserNotificationSettingsService userNotificationSettingsService;
 
@@ -58,6 +58,7 @@ public class AssistantTimeZoneUpdateHandler implements UpdateHandler {
     private void processMessage(Update update, TelegramUser telegramUser) {
         Long chatId = update.getMessage().getChatId();
         assistantTelegramBot.sendChatActionTyping(chatId);
+        userMessagesLogService.createLog(telegramUser, update.getMessage().getText());
 
         UserNotificationSettings settings = userNotificationSettingsService.getOrCreate(telegramUser.getTelegramId());
 
@@ -75,6 +76,8 @@ public class AssistantTimeZoneUpdateHandler implements UpdateHandler {
         Long chatId = callbackQuery.getMessage().getChatId();
         Integer messageId = callbackQuery.getMessage().getMessageId();
         String callbackData = callbackQuery.getData();
+
+        userMessagesLogService.createLog(telegramUser, callbackData);
 
         String[] parts = callbackData.split(TelegramBot.DEFAULT_DELIMETER);
         //Если в колбэк-данных нет ничего, кроме комманды - то

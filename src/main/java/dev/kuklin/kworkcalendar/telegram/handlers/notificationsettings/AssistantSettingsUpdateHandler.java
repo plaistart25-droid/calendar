@@ -6,6 +6,7 @@ import dev.kuklin.kworkcalendar.library.tgmodels.UpdateHandler;
 import dev.kuklin.kworkcalendar.library.tgutils.Command;
 import dev.kuklin.kworkcalendar.library.tgutils.TelegramKeyboard;
 import dev.kuklin.kworkcalendar.models.TokenRefreshException;
+import dev.kuklin.kworkcalendar.services.UserMessagesLogService;
 import dev.kuklin.kworkcalendar.services.UserNotificationSettingsService;
 import dev.kuklin.kworkcalendar.services.google.CalendarService;
 import dev.kuklin.kworkcalendar.telegram.AssistantTelegramBot;
@@ -24,6 +25,7 @@ public class AssistantSettingsUpdateHandler implements UpdateHandler {
     private final AssistantTelegramBot assistantTelegramBot;
     private final CalendarService calendarService;
     private final UserNotificationSettingsService userNotificationSettingsService;
+    private final UserMessagesLogService userMessagesLogService;
     private static final String TZ_ERROR_MSG = """
                 Не получилось определить часовой пояс! Попробуйте повторить действие позже!
             """;
@@ -34,8 +36,10 @@ public class AssistantSettingsUpdateHandler implements UpdateHandler {
     @Override
     public void handle(Update update, TelegramUser telegramUser) {
         Long chatId = update.getMessage().getChatId();
+        assistantTelegramBot.sendChatActionTyping(chatId);
         assistantTelegramBot.sendDeleteMessage(chatId, update.getMessage().getMessageId());
 
+        userMessagesLogService.createLog(telegramUser, update.getMessage().getText());
         try {
             assistantTelegramBot.sendReturnedMessage(
                     chatId,
