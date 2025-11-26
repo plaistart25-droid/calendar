@@ -151,11 +151,12 @@ public class DailyNotificationSchedulerProcessor implements ScheduleProcessor {
 
     private String getTodayEventsString(List<Event> events) {
         StringBuilder sb = new StringBuilder();
-        sb.append("На сегодня запланировано: ");
+        sb.append("На сегодня запланировано: ").append("\n").append("───────").append("\n");
         int i = 1;
         for (Event event: events) {
             sb.append("" + i + ". ").append(CalendarEventUpdateHandler.getResponseEventString(event));
             i++;
+            sb.append("\n");
         }
 
         return sb.append("\n").toString();
