@@ -47,6 +47,7 @@ public class AssistantTodayUpdateHandler implements UpdateHandler {
         try {
             List<Event> events = calendarService.getTodayEvents(telegramUser.getTelegramId());
             response = getTodayEventsString(events);
+            assistantTelegramBot.sendReturnedMessage(chatId, response);
         } catch (IOException e) {
             log.error(response, e);
         } catch (TokenRefreshException e) {
