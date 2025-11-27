@@ -239,7 +239,7 @@ public class CalendarEventUpdateHandler implements UpdateHandler {
             sb.append("• Напомнить за: ");
             for (EventReminder reminder: event.getReminders().getOverrides()) {
                 String time = minutesToReadableTime(reminder.getMinutes());
-                sb.append(time).append(" ");
+                sb.append(time).append(" ").append("\n");
             }
         }
 
