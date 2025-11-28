@@ -6,13 +6,13 @@ import dev.kuklin.kworkcalendar.entities.AssistantGoogleOAuth;
 import dev.kuklin.kworkcalendar.telegram.handlers.AssistantCalendarChooseUpdateHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ClassPathResource;
 
 import java.net.URI;
 import java.net.URLEncoder;
@@ -126,7 +126,13 @@ public class GoogleOAuthService {
                     .saveFromAuthCallback(cb.telegramId(), tokens, userInfo, Instant.now());
 
             // 5) Отправка уведомления пользователю
-            String calendarId = calendarService.createNewServiceCalendarAndGetCalendarIdOrNull(auth);
+            String calendarId = null;
+            try {
+                calendarId = calendarService.getOrCreateCalendarId(auth);
+            } catch (Exception e) {
+                handler.sendCalendarErrorMessage(cb.telegramId());
+            }
+
             if (calendarId != null) {
                 tokenService.setDefaultCalendarOrNull(auth.getTelegramId(), calendarId);
             }

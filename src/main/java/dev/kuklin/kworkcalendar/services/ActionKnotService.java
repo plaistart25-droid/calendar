@@ -11,7 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +45,12 @@ public class ActionKnotService {
                         "timezone": "",      \s
                         "result": "",         // Опиши действия которые ты сделал. Если не получилось извлечь данные - напиши об этом.
                         "isSuccessful": ""    // Boolean-ответ, true - если получилось извлечь данные, false - если не получилось извлечь название события и дату начала
-                      }
+                        "notifyInMinutesList": [] // Массив целых чисел. Каждый элемент — это количество минут до начала события,
+                                                      // за которое нужно отправить напоминание.
+                                                      // Если пользователь говорит: "напомни за X минут/часов/дней" или указывает несколько
+                                                      // напоминаний ("за день и за час"), добавь все эти значения в МИНУТАХ.
+                                                      // Если явного запроса на напоминания не было — верни пустой массив [].
+                          }
                     }
                     3. Если в тексте нет описания — оставить пустую строку description.
                     4. Дату и время распознать из текста.
@@ -81,7 +88,57 @@ public class ActionKnotService {
                 "timezone": "",
                 "result": "",          // краткий текст, какие данные распознаны и какие действия будут выполнены
                 "isSuccessful": ""     // true или false
-              }
+                "notifyInMinutesList": [] // Массив целых чисел. Каждый элемент — это количество минут ДО НАЧАЛА события,
+                                          // за которое нужно отправить напоминание.
+                                          //
+                                          // ВАЖНО: различай два типа просьб пользователя по СМЫСЛУ:
+                                          //
+                                          // 1) Напоминание "ПЕРЕД началом события".
+                                          //    Пользователь явно говорит, что напоминание должно прийти ЗАРАНЕЕ,
+                                          //    перед началом задачи/встречи:
+                                          //    - смысл фраз: "заранее", "до начала", "до встречи", "за X до",
+                                          //      "чтобы заранее вспомнить", "за X минут до события" и т.п.
+                                          //    Примеры формулировок:
+                                          //      - "напомни за час до встречи"
+                                          //      - "за 10 минут до начала"
+                                          //      - "заранее за полчаса напомни"
+                                          //
+                                             //    В этом случае:
+                                             //      - определи X (минуты/часы/дни по смыслу фразы),
+                                             //      - переведи X в минуты,
+                                             //      - добавь X в notifyInMinutesList как количество минут ДО начала события.
+                                             //    Пример:
+                                             //      "напомни за час до" → notifyInMinutesList = [60].
+                                             //
+                                             // 2) Напоминание "ЧЕРЕЗ X от текущего момента".
+                                             //    Пользователь говорит, что напоминание должно прийти через некоторый
+                                             //    промежуток времени ОТ СЕЙЧАС, а не "за X до начала".
+                                             //    Это любые фразы по смыслу вида:
+                                             //      - "через час напомни про задачу"
+                                             //      - "через два часа напомни про встречу в 16:00"
+                                             //      - "напомни мне через полчаса"
+                                             //    Даже если нет слова "через", но по смыслу понятно, что речь о промежутке
+                                             //    от текущего момента (например: "через N", "спустя N", "через N времени").
+                                             //
+                                             //    Алгоритм:
+                                             //      - возьми текущее время отправки сообщения,
+                                             //      - по смыслу фразы определи промежуток X (в минутах/часах/днях),
+                                             //      - вычисли время напоминания remindAt = текущее_время + X,
+                                             //      - определи время начала события start,
+                                             //      - вычисли minutesBefore = (start - remindAt) в минутах,
+                                             //        округлив до ближайшего целого,
+                                             //      - если minutesBefore < 0 (remindAt позже начала события), используй 0,
+                                             //      - добавь minutesBefore в notifyInMinutesList.
+                                             //
+                                             //    Пример:
+                                             //      Сейчас 10:00, событие в 16:00.
+                                             //      Фраза: "Задача в 4 часа, напомни мне через час".
+                                             //      → remindAt = 11:00 (через час от текущего времени),
+                                             //      → до события остаётся 5 часов = 300 минут,
+                                             //      → notifyInMinutesList = [300].
+                                             //
+                                             // Если явного смысла "напомнить" нет — верни пустой массив [].
+                  }
             }
 
             ---
@@ -149,9 +206,18 @@ public class ActionKnotService {
 
 
     public ActionKnot getActionKnotOrNull(String message, String tz) {
+         // например: "Europe/Moscow"
+        ZoneId userZone = ZoneId.of(tz);
+        ZonedDateTime nowForGpt = ZonedDateTime.now(userZone);
+
+        // "сегодня" в таймзоне пользователя
+        String todayInUserZone = nowForGpt.toLocalDate().toString();
+        // время обращения к GPT в той же таймзоне
+        String nowForGptStr = nowForGpt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
         String aiResponse = aiService.fetchResponse(
                 components.getAiKey(),
-                String.format(AI_REQUEST, message, OffsetDateTime.now(), tz, OffsetDateTime.now()));
+                String.format(AI_REQUEST, message, todayInUserZone, tz, nowForGptStr));
         aiResponse = extractResponse(aiResponse);
         aiMessageLogService.saveLog(message, aiResponse);
         try {

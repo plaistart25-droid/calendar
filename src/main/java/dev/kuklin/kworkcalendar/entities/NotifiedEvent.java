@@ -28,5 +28,7 @@ public class NotifiedEvent {
 
     @Column(name = "notified_at", nullable = false)
     private Instant notifiedAt = Instant.now();
+    @Column(name = "reminder_minutes")
+    private Integer reminderMinutes;
 
 }

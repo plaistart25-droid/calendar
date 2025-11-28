@@ -2,6 +2,7 @@ package dev.kuklin.kworkcalendar.telegram.handlers;
 
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
+import com.google.api.services.calendar.model.EventReminder;
 import dev.kuklin.kworkcalendar.ai.OpenAiIntegrationService;
 import dev.kuklin.kworkcalendar.configurations.TelegramAiAssistantCalendarBotKeyComponents;
 import dev.kuklin.kworkcalendar.entities.TelegramUser;
@@ -13,9 +14,8 @@ import dev.kuklin.kworkcalendar.models.ActionKnot;
 import dev.kuklin.kworkcalendar.models.CalendarEventAiResponse;
 import dev.kuklin.kworkcalendar.models.TokenRefreshException;
 import dev.kuklin.kworkcalendar.services.ActionKnotService;
-import dev.kuklin.kworkcalendar.services.UserGoogleCalendarService;
+import dev.kuklin.kworkcalendar.services.UserMessagesLogService;
 import dev.kuklin.kworkcalendar.services.google.CalendarService;
-import dev.kuklin.kworkcalendar.services.google.TokenService;
 import dev.kuklin.kworkcalendar.services.telegram.TelegramService;
 import dev.kuklin.kworkcalendar.telegram.AssistantTelegramBot;
 import lombok.RequiredArgsConstructor;
@@ -43,8 +43,7 @@ public class CalendarEventUpdateHandler implements UpdateHandler {
     private final CalendarService calendarService;
     private final ActionKnotService actionKnotService;
     private final TelegramService telegramService;
-    private final TokenService tokenService;
-    private final UserGoogleCalendarService userGoogleCalendarService;
+    private final UserMessagesLogService userMessagesLogService;
     private final TelegramAiAssistantCalendarBotKeyComponents components;
     private static final String VOICE_ERROR_MESSAGE =
             "Ошибка! Не получилось обработать голосовое сообщение";
@@ -82,9 +81,17 @@ public class CalendarEventUpdateHandler implements UpdateHandler {
         Long chatId = message.getChatId();
         assistantTelegramBot.sendChatActionTyping(chatId);
 
+
         //Проверка на количество символов в текстовом сообщении
         if (message.getText() != null && message.getText().length() > MAX_TEXT_CHARS) {
             assistantTelegramBot.sendReturnedMessage(chatId, TEXT_TO_LONG_ERROR_MESSAGE);
+            userMessagesLogService.createLog(
+                    telegramUser.getTelegramId(),
+                    telegramUser.getUsername(),
+                    telegramUser.getFirstname(),
+                    telegramUser.getLastname(),
+                    update.getMessage().getText()
+            );
             return;
         }
 
@@ -92,6 +99,14 @@ public class CalendarEventUpdateHandler implements UpdateHandler {
                 ? processVoiceMessageOrSendError(message)
                 : message.getText();
         if (request == null) return;
+
+        userMessagesLogService.createLog(
+                telegramUser.getTelegramId(),
+                telegramUser.getUsername(),
+                telegramUser.getFirstname(),
+                telegramUser.getLastname(),
+                request
+        );
 
         try {
             CalendarService.CalendarContext calendarContext =
@@ -215,12 +230,39 @@ public class CalendarEventUpdateHandler implements UpdateHandler {
         }
 
         sb
-                .append("[").append(summary).append("]").append("\n")
+                .append(summary).append("\n")
                 .append("• Дата: ").append(formatHumanReadableDayAndMonth(event.getStart())).append("\n")
                 .append("• Время: ").append(formatHumanReadableTimeBetweenStartAndEnd(event.getStart(), event.getEnd())).append("\n")
-                .append("• Заметки: ").append(description);
+                .append("• Заметки: ").append(description).append("\n");
+
+        if (event.getReminders() != null && event.getReminders().getOverrides() != null) {
+            sb.append("• Напомнить за: ");
+            for (EventReminder reminder: event.getReminders().getOverrides()) {
+                String time = minutesToReadableTime(reminder.getMinutes());
+                sb.append(time).append(" ").append("\n");
+            }
+        }
 
         return sb.toString();
+    }
+
+    public static String minutesToReadableTime(Integer minutes) {
+        if (minutes == null) {
+            return null;
+        }
+
+        int hrs = minutes / 60;
+        int mins = minutes % 60;
+
+        StringBuilder sb = new StringBuilder();
+
+        if (hrs > 0) {
+            sb.append(hrs).append(" час ");
+        }
+
+        sb.append(mins).append(" минут");
+
+        return sb.toString().trim();
     }
 
     private static String formatHumanReadableTimeBetweenStartAndEnd(EventDateTime start, EventDateTime end) {

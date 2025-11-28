@@ -4,6 +4,7 @@ import dev.kuklin.kworkcalendar.configurations.auth.GoogleOAuthProperties;
 import dev.kuklin.kworkcalendar.entities.TelegramUser;
 import dev.kuklin.kworkcalendar.library.tgmodels.UpdateHandler;
 import dev.kuklin.kworkcalendar.library.tgutils.Command;
+import dev.kuklin.kworkcalendar.services.UserMessagesLogService;
 import dev.kuklin.kworkcalendar.services.google.LinkStateService;
 import dev.kuklin.kworkcalendar.telegram.AssistantTelegramBot;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class GoogleAuthHandler implements UpdateHandler {
     private final LinkStateService linkStateService;
     private final AssistantTelegramBot telegramBot;
     private final GoogleOAuthProperties props;
+    private final UserMessagesLogService userMessagesLogService;
     // TTL одноразовой ссылки:
     private static final Integer TTL_TIME_MINUTES = 15;
     private static final String START_MSG =
@@ -49,6 +51,7 @@ public class GoogleAuthHandler implements UpdateHandler {
         Long chatId = update.getCallbackQuery().getMessage().getChatId();
         Integer messageId = update.getCallbackQuery().getMessage().getMessageId();
 
+        saveLog(update, telegramUser, Command.ASSISTANT_AUTH.getCommandText());
         String link = getUrl(telegramUser.getTelegramId());
         telegramBot.sendEditMessage(
                 chatId,
@@ -61,10 +64,22 @@ public class GoogleAuthHandler implements UpdateHandler {
     private void processMessage(Update update, TelegramUser telegramUser) {
         Long chatId = update.getMessage().getChatId();
 
+        saveLog(update, telegramUser, update.getMessage().getText());
+
         String link = getUrl(telegramUser.getTelegramId());
         telegramBot.sendReturnedMessage(
                 chatId,
                 START_MSG.formatted(link));
+    }
+
+    private void saveLog(Update update, TelegramUser telegramUser, String text) {
+        userMessagesLogService.createLog(
+                telegramUser.getTelegramId(),
+                telegramUser.getUsername(),
+                telegramUser.getFirstname(),
+                telegramUser.getLastname(),
+                text
+        );
     }
 
     private String getUrl(Long telegramId) {

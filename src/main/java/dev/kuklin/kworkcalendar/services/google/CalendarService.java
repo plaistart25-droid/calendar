@@ -43,11 +43,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static dev.kuklin.kworkcalendar.services.google.utils.CalendarServiceUtils.getCalendarListEntryBySummaryOrNull;
+import static dev.kuklin.kworkcalendar.services.google.utils.CalendarServiceUtils.resolveTimeZoneFromUtcOffsetHours;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CalendarService {
-    private static final String DEFAULT_SUMMARY = "Телеграм-бот";
+    private static final String DEFAULT_SUMMARY = "PLAI BOT";
     private static final String DEFAULT_DESC = "Календарь созданный телеграм-ботом";
     private static final String DEFAULT_TZ = "Europe/Moscow";
     private final OpenAiIntegrationService openAiIntegrationService;
@@ -124,27 +127,120 @@ public class CalendarService {
                     Запрещено добавлять Markdown, кодовые блоки (```), подсветку json, комментарии, пояснения, преамбулы.
             """;
 
+    /**
+     * - пытается найти уже созданный календарь по данным из БД;
+     * - пытается найти уже созданный календарь по уникальному имени;
+     * - если нашёл —  возвращает его id;
+     * - если не нашёл — создаёт новый календарь с дефолтной тамйзоной.
+     */
+    public String getOrCreateCalendarId(AssistantGoogleOAuth auth) throws TokenRefreshException, IOException {
 
-    public String createNewServiceCalendarAndGetCalendarIdOrNull(AssistantGoogleOAuth auth) {
-        CalendarContext context = null;
-        try {
-            context = getCalendarContext(auth.getTelegramId());
-        } catch (TokenRefreshException e) {
-            log.error("Google token error!", e);
-            return null;
+        CalendarContext context = getCalendarContext(auth.getTelegramId());
+        //Если календарь существует, у нас в БД, то мы возвращаем его ID
+        if (checkCalendarExist(context)) {
+            return context.getCalendarId();
         }
 
-        com.google.api.services.calendar.model.Calendar calendar = new com.google.api.services.calendar.model.Calendar();
-        calendar.setSummary(DEFAULT_SUMMARY).setDescription(DEFAULT_DESC).setTimeZone(DEFAULT_TZ);
+        //Если календаря нет в нашей БД, то мы ищем его в гугл аккаунте пользователя
+        var listReq = context.getCalendar().calendarList().list();
+        List<CalendarListEntry> items = listReq.execute().getItems();
 
+        if (items != null) {
+            CalendarListEntry item = getCalendarListEntryBySummaryOrNull(items, DEFAULT_SUMMARY);
+            if (item != null) {
+                return item.getId();
+            }
+        }
+
+        //Если в гугл аккаунте - нет календаря - мы создаем новый
+        return createNewCalendarAndGetId(context, DEFAULT_SUMMARY, DEFAULT_TZ);
+    }
+
+    public String getCalendarSettingsString(Long telegramId) throws TokenRefreshException, IOException {
+        CalendarContext context = getCalendarContext(telegramId);
+        com.google.api.services.calendar.model.Calendar existing =
+                context.getCalendar()
+                        .calendars()
+                        .get(context.getCalendarId())
+                        .execute();
+        StringBuilder sb = new StringBuilder();
+
+        sb
+                .append("Календарь:").append("\n")
+                .append(existing.getSummary()).append("\n")
+                .append("Таймзона: ").append(existing.getTimeZone());
+
+        return sb.toString();
+    }
+
+    public com.google.api.services.calendar.model.Calendar getCalendarByTelegramIdOrNull(Long telegramId) throws TokenRefreshException, IOException {
+        CalendarContext context = getCalendarContext(telegramId);
+        if (context.getCalendarId() == null) return null;
+        com.google.api.services.calendar.model.Calendar existing =
+                context.getCalendar()
+                        .calendars()
+                        .get(context.getCalendarId())
+                        .execute();
+        return existing;
+    }
+
+    private boolean checkCalendarExist(CalendarContext context) {
         try {
-            calendar = context.getCalendar().calendars().insert(calendar).execute();
+            String calendarId = context.getCalendarId();
+            if (calendarId == null || context.getCalendar() == null) {
+                return false;
+            }
+
+            com.google.api.services.calendar.model.Calendar existing =
+                    context.getCalendar()
+                            .calendars()
+                            .get(context.getCalendarId())
+                            .execute();
+
+            return existing != null;
         } catch (IOException e) {
-            log.error("Google connection error!", e);
+            return false;
+        }
+    }
+    public String setNewTimeZoneOrNull(Long telegramId, Integer offset) throws IOException, TokenRefreshException {
+        log.info("Setting new time zone!");
+        CalendarContext context = getCalendarContext(telegramId);
+        if (context.getCalendarId() == null) {
+            log.info("calndar id == null");
+            // либо просто выходим, либо создаём свой PLAI BOT:
+            // String id = getOrCreateCalendarId(auth);
             return null;
         }
-        return calendar.getId();
+        String tz = resolveTimeZoneFromUtcOffsetHours(offset);
+        log.info("Timezone: {}", tz);
+        com.google.api.services.calendar.model.Calendar existing =
+                context.getCalendar()
+                        .calendars()
+                        .get(context.getCalendarId())
+                        .execute();
 
+        log.info("calendar info: summary:{}, tz:{}", existing.getSummary(), existing.getTimeZone());
+        if (existing.getTimeZone() == null || !existing.getTimeZone().equals(tz)) {
+            log.info("Calendar set new timezone!");
+            existing.setTimeZone(tz);
+
+            context.getCalendar()
+                    .calendars()
+                    .update(existing.getId(), existing)
+                    .execute();
+        }
+        return existing.getId();
+    }
+
+    private String createNewCalendarAndGetId(CalendarContext context, String summary, String tz) throws IOException {
+        com.google.api.services.calendar.model.Calendar calendar =
+                new com.google.api.services.calendar.model.Calendar();
+        calendar.setSummary(summary)
+                .setDescription(DEFAULT_DESC)
+                .setTimeZone(tz);
+
+        calendar = context.getCalendar().calendars().insert(calendar).execute();
+        return calendar.getId();
     }
 
     public Event addEventInCalendar(CalendarContext calendarContext,
@@ -467,7 +563,6 @@ public class CalendarService {
         try {
             com.google.api.services.calendar.model.Calendar calendar =
                     calendarService.calendars().get(calendarId).execute();
-
             return calendar != null;
         } catch (IOException e) {
             return false;
