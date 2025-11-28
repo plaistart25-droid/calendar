@@ -13,6 +13,7 @@ public class AssistantSchedulerService {
     private final EventNotificationSchedulerProcessor eventNotificationSchedulerProcessor;
     private final EventNotificationNoteCleanTableScheduleProcessor eventNotificationNoteCleanTableScheduleProcessor;
     private final DailyNotificationSchedulerProcessor dailyNotificationSchedulerProcessor;
+    private final UserAuthNotificationSchedulerProcessor userAuthNotificationSchedulerProcessor;
 
     @Scheduled(cron = "0 */5 * * * *")
     public void eventNotificationSchedulerProcess() {
@@ -31,6 +32,12 @@ public class AssistantSchedulerService {
     public void dailyNotificationSchedulerProcessor() {
         getInfo(dailyNotificationSchedulerProcessor.getSchedulerName());
         dailyNotificationSchedulerProcessor.process();
+    }
+
+    @Scheduled(cron = "0 */4 * * * *")
+    public void userAuthNotificationSchedulerProcessor() {
+        getInfo(userAuthNotificationSchedulerProcessor.getSchedulerName());
+        userAuthNotificationSchedulerProcessor.process();
     }
 
     private void getInfo(String name) {

@@ -17,6 +17,7 @@ import java.util.List;
 public class UserNotificationSettingsService {
     private final UserNotificationSettingsRepository repository;
     private static final LocalTime DEF_TIME = LocalTime.of(6, 0);
+    private static final Integer UTC_DEF_TIME = 3;
 
     public UserNotificationSettings getOrCreate(Long telegramId) {
         return repository.findByTelegramId(telegramId)
@@ -24,7 +25,7 @@ public class UserNotificationSettingsService {
                     UserNotificationSettings settings = new UserNotificationSettings()
                             .setTelegramId(telegramId)
                             .setDailyEnabled(true)
-                            .setUtcOffsetHours(null)
+                            .setUtcOffsetHours(UTC_DEF_TIME)
                             .setDailyTime(DEF_TIME)
                             .setLastDailyNotified(null);
                     return repository.save(settings);

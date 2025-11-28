@@ -18,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -91,7 +90,6 @@ public class AssistantCalendarChooseUpdateHandler implements UpdateHandler {
             }
 
             assistantTimeZoneUpdateHandler.sendDefTzMessage(auth.getTelegramId());
-            assistantDailyTimeUpdateHandler.sendDefMessage(auth.getTelegramId());
         } catch (Exception ignore) {
             telegramBot.sendReturnedMessage(auth.getTelegramId(),
                     GOOGLE_AUTH_CALLBACK_ERROR_MESSAGE + Command.ASSISTANT_CHOOSE_CALENDAR.getCommandText());
