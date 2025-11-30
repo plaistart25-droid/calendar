@@ -15,6 +15,7 @@ public enum Command {
     ASSISTANT_AUTH("/auth"),
     ASSISTANT_AUTH_STATUS("/auth_status"),
     ASSISTANT_CHOOSE_CALENDAR("/choosecalendar"),
+    ASSISTANT_TABLE("/table")
     ;
 
     private final String commandText;

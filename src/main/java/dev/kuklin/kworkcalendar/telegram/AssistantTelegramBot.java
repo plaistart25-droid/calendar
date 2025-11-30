@@ -6,9 +6,14 @@ import dev.kuklin.kworkcalendar.services.AsyncService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.ByteArrayInputStream;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -35,6 +40,23 @@ public class AssistantTelegramBot extends TelegramBot {
         }
     }
 
+    /**
+     * Удобный метод для отправки документа из байтов (CSV и т.п.)
+     */
+    public Message sendDocument(long chatId, byte[] content, String filename, String caption) throws TelegramApiException {
+        InputFile inputFile = new InputFile(
+                new ByteArrayInputStream(content),
+                filename
+        );
+
+        SendDocument sendDocument = SendDocument.builder()
+                .chatId(chatId)
+                .document(inputFile)
+                .caption(caption)
+                .build();
+
+        return execute(sendDocument);
+    }
 
     private final Set<Long> inProcess = new HashSet<>();
 

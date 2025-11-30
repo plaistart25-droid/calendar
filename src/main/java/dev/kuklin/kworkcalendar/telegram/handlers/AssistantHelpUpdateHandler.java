@@ -3,6 +3,7 @@ package dev.kuklin.kworkcalendar.telegram.handlers;
 import dev.kuklin.kworkcalendar.entities.TelegramUser;
 import dev.kuklin.kworkcalendar.library.tgmodels.UpdateHandler;
 import dev.kuklin.kworkcalendar.library.tgutils.Command;
+import dev.kuklin.kworkcalendar.services.UserMessagesLogService;
 import dev.kuklin.kworkcalendar.telegram.AssistantTelegramBot;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 @RequiredArgsConstructor
 public class AssistantHelpUpdateHandler implements UpdateHandler {
     private final AssistantTelegramBot telegramBot;
+    private final UserMessagesLogService userMessagesLogService;
     private static final String HELP_MSG =
             """
                     <b>ИНСТРУКЦИЯ ПО РУЧНОЙ УСТАНОВКЕ КАЛЕНДАРЯ</b>
@@ -32,6 +34,13 @@ public class AssistantHelpUpdateHandler implements UpdateHandler {
     @Override
     public void handle(Update update, TelegramUser telegramUser) {
         telegramBot.sendReturnedMessage(update.getMessage().getChatId(), HELP_MSG);
+        userMessagesLogService.createLog(
+                telegramUser.getTelegramId(),
+                telegramUser.getUsername(),
+                telegramUser.getFirstname(),
+                telegramUser.getLastname(),
+                update.getMessage().getText()
+        );
     }
 
     @Override

@@ -14,6 +14,7 @@ import dev.kuklin.kworkcalendar.models.CalendarEventAiResponse;
 import dev.kuklin.kworkcalendar.models.TokenRefreshException;
 import dev.kuklin.kworkcalendar.services.ActionKnotService;
 import dev.kuklin.kworkcalendar.services.UserGoogleCalendarService;
+import dev.kuklin.kworkcalendar.services.UserMessagesLogService;
 import dev.kuklin.kworkcalendar.services.google.CalendarService;
 import dev.kuklin.kworkcalendar.services.google.TokenService;
 import dev.kuklin.kworkcalendar.services.telegram.TelegramService;
@@ -43,8 +44,7 @@ public class CalendarEventUpdateHandler implements UpdateHandler {
     private final CalendarService calendarService;
     private final ActionKnotService actionKnotService;
     private final TelegramService telegramService;
-    private final TokenService tokenService;
-    private final UserGoogleCalendarService userGoogleCalendarService;
+    private final UserMessagesLogService userMessagesLogService;
     private final TelegramAiAssistantCalendarBotKeyComponents components;
     private static final String VOICE_ERROR_MESSAGE =
             "Ошибка! Не получилось обработать голосовое сообщение";
@@ -82,9 +82,17 @@ public class CalendarEventUpdateHandler implements UpdateHandler {
         Long chatId = message.getChatId();
         assistantTelegramBot.sendChatActionTyping(chatId);
 
+
         //Проверка на количество символов в текстовом сообщении
         if (message.getText() != null && message.getText().length() > MAX_TEXT_CHARS) {
             assistantTelegramBot.sendReturnedMessage(chatId, TEXT_TO_LONG_ERROR_MESSAGE);
+            userMessagesLogService.createLog(
+                    telegramUser.getTelegramId(),
+                    telegramUser.getUsername(),
+                    telegramUser.getFirstname(),
+                    telegramUser.getLastname(),
+                    update.getMessage().getText()
+            );
             return;
         }
 
@@ -92,6 +100,14 @@ public class CalendarEventUpdateHandler implements UpdateHandler {
                 ? processVoiceMessageOrSendError(message)
                 : message.getText();
         if (request == null) return;
+
+        userMessagesLogService.createLog(
+                telegramUser.getTelegramId(),
+                telegramUser.getUsername(),
+                telegramUser.getFirstname(),
+                telegramUser.getLastname(),
+                request
+        );
 
         try {
             CalendarService.CalendarContext calendarContext =

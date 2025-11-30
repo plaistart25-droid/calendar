@@ -5,6 +5,7 @@ import dev.kuklin.kworkcalendar.library.tgmodels.TelegramBot;
 import dev.kuklin.kworkcalendar.library.tgmodels.UpdateHandler;
 import dev.kuklin.kworkcalendar.library.tgutils.Command;
 import dev.kuklin.kworkcalendar.models.TokenRefreshException;
+import dev.kuklin.kworkcalendar.services.UserMessagesLogService;
 import dev.kuklin.kworkcalendar.services.google.CalendarService;
 import dev.kuklin.kworkcalendar.telegram.AssistantTelegramBot;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.io.IOException;
 public class AssistantDeleteUpdateHandler implements UpdateHandler {
     private final AssistantTelegramBot assistantTelegramBot;
     private final CalendarService calendarService;
+    private final UserMessagesLogService userMessagesLogService;
     private static final String ERROR_MSG = "Не получилось удалить мероприятие";
     private static final String GOOGLE_OTHER_ERROR_MESSAGE =
             "Попробуйте обратиться позже!";
@@ -38,6 +40,13 @@ public class AssistantDeleteUpdateHandler implements UpdateHandler {
                     eventId, telegramUser.getTelegramId()
             );
             assistantTelegramBot.sendDeleteMessage(chatId, messageId);
+            userMessagesLogService.createLog(
+                    telegramUser.getTelegramId(),
+                    telegramUser.getUsername(),
+                    telegramUser.getFirstname(),
+                    telegramUser.getLastname(),
+                    "УДАЛЕНИЕ СОБЫТИЯ ИЗ КАЛЕНДАРЯ"
+            );
         } catch (IOException e) {
             assistantTelegramBot.sendReturnedMessage(chatId, ERROR_MSG);
         } catch (TokenRefreshException e) {
